@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タスク管理</title>
+
+<style>
+:root{
+  --ink:#1b2733;
+  --ink-soft:#5a6b7a;
+  --paper:#ffffff;
+  --surface:#f2f5f7;
+  --accent:#0f6e5c;
+  --accent-soft:#e3efeb;
+  --rule:#d5dde3;
+  --urgent:#c0392b;
+  --urgent-soft:#fbe9e7;
+}
+
+*{box-sizing:border-box;}
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0;
+  background:var(--surface);
+  color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic Medium","Meiryo",sans-serif;
+  font-size:16px;
+  line-height:1.7;
+  letter-spacing:.02em;
+}
+
+.wrap{
+  max-width:640px;
+  margin:0 auto;
+  padding:24px 16px 80px;
+}
+
+h1{
+  font-size:22px;
+  font-weight:700;
+  margin:0 0 20px;
+  text-align:center;
+}
+
+h2{
+  font-size:15px;
+  font-weight:700;
+  margin:0 0 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.count{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+  background:var(--rule);
+  color:var(--ink-soft);
+  font-size:12px;
+  font-weight:700;
+}
+
+section{
+  background:var(--paper);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 1px 3px rgba(20,30,40,.06);
+}
+
+/* ---------- 新規追加 ---------- */
+#new-task-input{
+  width:100%;
+  font-size:16px;
+  font-family:inherit;
+  color:var(--ink);
+  padding:14px;
+  border:1px solid var(--rule);
+  border-radius:10px;
+  resize:none;
+  min-height:64px;
+  line-height:1.6;
+}
+#new-task-input:focus{
+  outline:none;
+  border-color:var(--accent);
+}
+
+.add-controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:10px;
+}
+
+.urgent-check{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14px;
+  color:var(--ink-soft);
+  user-select:none;
+}
+.urgent-check input{
+  width:20px;
+  height:20px;
+  accent-color:var(--urgent);
+}
+
+#add-form button{
+  appearance:none;
+  border:none;
+  background:var(--accent);
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  padding:12px 22px;
+  border-radius:10px;
+  cursor:pointer;
+}
+#add-form button:active{
+  opacity:.85;
+}
+
+/* ---------- タスク一覧 ---------- */
+.task-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.task-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px;
+  border:1px solid var(--rule);
+  border-radius:10px;
+  background:var(--paper);
+}
+
+.task-item.urgent{
+  border-color:var(--urgent);
+  background:var(--urgent-soft);
+}
+
+.task-main{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.task-text{
+  word-break:break-word;
+  white-space:pre-wrap;
+}
+
+.done-list .task-text{
+  color:var(--ink-soft);
+  text-decoration:line-through;
+}
+
+.urgent-badge{
+  flex:none;
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  background:var(--urgent);
+  padding:2px 7px;
+  border-radius:999px;
+}
+
+.task-actions{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex:none;
+}
+
+.task-actions button{
+  appearance:none;
+  border:1px solid var(--rule);
+  background:var(--paper);
+  color:var(--ink);
+  font-size:13px;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.complete-btn{
+  border-color:var(--accent)!important;
+  color:var(--accent)!important;
+  font-weight:700;
+}
+
+.undo-btn{
+  color:var(--ink-soft)!important;
+}
+
+.delete-btn{
+  padding:8px 10px!important;
+  color:var(--ink-soft)!important;
+  font-size:16px!important;
+  line-height:1!important;
+}
+
+.empty-message{
+  color:var(--ink-soft);
+  font-size:14px;
+  text-align:center;
+  padding:14px 0 4px;
+  margin:0;
+}
+
+@media (min-width:600px){
+  .wrap{ padding-top:40px; }
+  h1{ font-size:26px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>タスク管理</h1>
+
+  <section class="add-section">
+    <form id="add-form">
+      <textarea id="new-task-input" placeholder="タスクを入力" required></textarea>
+      <div class="add-controls">
+        <label class="urgent-check">
+          <input type="checkbox" id="urgent-checkbox">
+          緊急
+        </label>
+        <button type="submit">追加</button>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <h2>未完了タスク <span class="count" id="todo-count">0</span></h2>
+    <ul class="task-list" id="todo-list"></ul>
+    <p class="empty-message" id="todo-empty">タスクはありません</p>
+  </section>
+
+  <section>
+    <h2>完了タスク <span class="count" id="done-count">0</span></h2>
+    <ul class="task-list done-list" id="done-list"></ul>
+    <p class="empty-message" id="done-empty">タスクはありません</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  var STORAGE_KEY = "task-manager-tasks";
+  var tasks = [];
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      tasks = [];
+    }
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function render(){
+    var todos = tasks.filter(function(t){ return !t.done; });
+    var dones = tasks.filter(function(t){ return t.done; });
+
+    todos.sort(function(a, b){
+      if(a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+      return b.createdAt - a.createdAt;
+    });
+    dones.sort(function(a, b){
+      return (b.completedAt || 0) - (a.completedAt || 0);
+    });
+
+    document.getElementById("todo-count").textContent = todos.length;
+    document.getElementById("done-count").textContent = dones.length;
+    document.getElementById("todo-empty").style.display = todos.length ? "none" : "block";
+    document.getElementById("done-empty").style.display = dones.length ? "none" : "block";
+
+    document.getElementById("todo-list").innerHTML = todos.map(function(t){
+      return renderTodoItem(t);
+    }).join("");
+
+    document.getElementById("done-list").innerHTML = dones.map(function(t){
+      return renderDoneItem(t);
+    }).join("");
+  }
+
+  function renderTodoItem(t){
+    return (
+      '<li class="task-item' + (t.urgent ? ' urgent' : '') + '" data-id="' + t.id + '">' +
+        '<div class="task-main">' +
+          (t.urgent ? '<span class="urgent-badge">緊急</span>' : '') +
+          '<span class="task-text">' + escapeHtml(t.text) + '</span>' +
+        '</div>' +
+        '<div class="task-actions">' +
+          '<button type="button" class="complete-btn" data-action="complete">完了</button>' +
+          '<button type="button" class="delete-btn" data-action="delete" aria-label="削除">×</button>' +
+        '</div>' +
+      '</li>'
+    );
+  }
+
+  function renderDoneItem(t){
+    return (
+      '<li class="task-item" data-id="' + t.id + '">' +
+        '<div class="task-main">' +
+          '<span class="task-text">' + escapeHtml(t.text) + '</span>' +
+        '</div>' +
+        '<div class="task-actions">' +
+          '<button type="button" class="undo-btn" data-action="undo">戻す</button>' +
+          '<button type="button" class="delete-btn" data-action="delete" aria-label="削除">×</button>' +
+        '</div>' +
+      '</li>'
+    );
+  }
+
+  document.getElementById("add-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var input = document.getElementById("new-task-input");
+    var urgentBox = document.getElementById("urgent-checkbox");
+    var text = input.value.trim();
+    if(!text) return;
+
+    tasks.push({
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+      text: text,
+      urgent: urgentBox.checked,
+      done: false,
+      createdAt: Date.now(),
+      completedAt: null
+    });
+
+    input.value = "";
+    urgentBox.checked = false;
+    save();
+    render();
+    input.focus();
+  });
+
+  function handleListClick(e){
+    var btn = e.target.closest("button[data-action]");
+    if(!btn) return;
+    var li = e.target.closest(".task-item");
+    var id = li.getAttribute("data-id");
+    var task = tasks.find(function(t){ return t.id === id; });
+    if(!task) return;
+
+    var action = btn.getAttribute("data-action");
+    if(action === "complete"){
+      task.done = true;
+      task.completedAt = Date.now();
+    }else if(action === "undo"){
+      task.done = false;
+      task.completedAt = null;
+    }else if(action === "delete"){
+      tasks = tasks.filter(function(t){ return t.id !== id; });
+    }
+
+    save();
+    render();
+  }
+
+  document.getElementById("todo-list").addEventListener("click", handleListClick);
+  document.getElementById("done-list").addEventListener("click", handleListClick);
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
